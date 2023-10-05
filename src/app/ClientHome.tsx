@@ -17,21 +17,49 @@ export default function ClientHome() {
     setMessages(temp);
     setTheInput('');
     console.log('Calling OpenAI...');
+    try {
+      const response = await fetch('/api', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ messages }),
+      });
 
-    const response = await fetch('/api', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ messages }),
-    });
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
 
-    const data = await response.json();
-    const { output } = data;
-    console.log('OpenAI replied...', output.content);
+      const data = await response.json();
+      const { output } = data;
 
-    setMessages((prevMessages) => [...prevMessages, output]);
-    setIsLoading(false);
+      if (!output || typeof output !== 'string') {
+        throw new Error('Invalid response from server');
+      }
+
+      console.log('OpenAI replied...', output);
+
+      setMessages((prevMessages) => [...prevMessages, { role: 'assistant', content: output }]);
+    } catch (error) {
+      console.error('Error while fetching or parsing response:', error);
+    } finally {
+      setIsLoading(false);
+    }
+
+  //   const response = await fetch('/api', {
+  //     method: 'POST',
+  //     headers: {
+  //       'Content-Type': 'application/json',
+  //     },
+  //     body: JSON.stringify({ messages }),
+  //   });
+  //
+  //   const data = await response.json();
+  //   const { output } = data;
+  //   console.log('OpenAI replied...', output.content);
+  //
+  //   setMessages((prevMessages) => [...prevMessages, output]);
+  //   setIsLoading(false);
   };
 
   const Submit = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
